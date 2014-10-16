@@ -226,6 +226,7 @@
 						e.preventDefault();
 						if (selected_index !== -1) {
 							selectOption();
+							plugin.settings.searchCallback();
 						} else {
 							if ($input_element.val() !== '') {
 								plugin.settings.searchCallback();
@@ -352,6 +353,20 @@
 			search();
 		};
 
+		var searchByReg = function(text, searchInput){
+			var searchReg = escapeRegExp(searchInput);
+			return searchReg.test(text);
+		};
+
+		var escapeRegExp = function(str) {
+        	var specials = ["/", ".", "*", "+", "?", "|", "(", ")", "[", "]", "{", "}", "\\", "^", "$"];
+        	var regexp = new RegExp("(\\" + specials.join("|\\") + ")", "g");
+        	var reg = str.replace(regexp, "\\$1");
+        	reg = reg.replace(/\s/g, ".*");
+        	reg = reg.replace(/\\\*/g, ".*");
+            reg = reg.replace(/\\\?/g, ".");
+        	return new RegExp(reg, "i");
+    	};
 
 
 		// OPTIONS SEARCH METHOD
@@ -366,14 +381,14 @@
 						if ($group.children('option').length !== 0) {
 							var hasMatches = false;
 							$group.children('option').each(function () {
-								if ((!this.selected || !multiple) && $(this).html().toLowerCase().indexOf($input_element.val().toLowerCase()) !== -1) {
+								if ( ($(this).val() == 'new') || ((!this.selected || !multiple) && searchByReg($(this).html(), $input_element.val()) )) {
 									hasMatches = true;
 								}
 							});
 							if (hasMatches) {
 								var groupOptionsArray = [];
 								$group.children('option').each(function () {
-									if ((!this.selected || !multiple) && $(this).html().toLowerCase().indexOf($input_element.val().toLowerCase()) !== -1) {
+									if ( ($(this).val() == 'new') ||  ((!this.selected || !multiple) && searchByReg($(this).html(), $input_element.val()) )) {
 										groupOptionsArray.push({
 											type: 'option',
 											text: $(this).html(),
@@ -381,6 +396,7 @@
 										});
 									}
 								});
+
 								optionsArray.push({
 									type: 'group',
 									text: $group.attr('label'),
@@ -390,7 +406,7 @@
 							}
 						}
 					} else {
-						if ($(this).html().toLowerCase().indexOf($input_element.val().toLowerCase()) !== -1) {
+						if ($(this).val() == 'new' || searchByReg($(this).html(), $input_element.val()) ) {
 							if (!this.selected || !multiple) {
 								optionsArray.push({
 									type: 'option',
@@ -496,6 +512,7 @@
 				e.preventDefault();
 				e.stopPropagation();
 				selectOption();
+				plugin.settings.searchCallback();
 			});
 			return $option;
 		};
@@ -547,7 +564,7 @@
 			refreshSelectedOptions();
 			$input_element.val('');
 			$box_element.focus();
-			if (!settings.keepOpen) {
+			if (!plugin.settings.keepOpen) {
 				hideOptions();
 			}
 		};
